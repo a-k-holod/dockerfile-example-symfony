@@ -1,0 +1,44 @@
+version: '3'
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: "mysql://root:root@db/project_name"
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: project_name
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+
+  web:
+    image: project_name
+    restart: unless-stopped
+    ports:
+      - "8000:80"  # Map port 8000 from the container to port 8000 on the host
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - php
+
+  # Add the phpMyAdmin service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports:
+      - "8080:80" # Map phpMyAdmin to port 8080 on the host machine
+    environment:
+      PMA_HOST: db # Set the host to the name of your MySQL service
+      PMA_PORT: 3306 # Set the port to the MySQL port
+    depends_on:
+      - db # Make sure the MySQL service is running before starting phpMyAdmin
